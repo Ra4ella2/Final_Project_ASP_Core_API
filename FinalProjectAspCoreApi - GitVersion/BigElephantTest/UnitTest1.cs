@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
 using Microsoft.OpenApi.Validations;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 using System.Windows.Markup;
 using Xunit;
@@ -509,6 +510,293 @@ namespace BigElephantTest
             var ordersList = ordersEnumerable.Cast<object>().ToList();
 
             Assert.Empty(ordersList);
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Returns_400_When_Status_Invalid()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Created",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var result = await controller.ChangeOrderStatus(order.Id, new AdminController.UpdateOrderStatusRequest { Status = "aaaaaaa" });
+
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Returns_404_When_Order_Not_Found()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var result = await controller.ChangeOrderStatus(1, new AdminController.UpdateOrderStatusRequest { Status = "Created" });
+
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Returns_409_When_Order_Final()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Completed",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var result = await controller.ChangeOrderStatus(order.Id, new AdminController.UpdateOrderStatusRequest { Status = "Shipped" });
+
+            Assert.IsType<ConflictObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Returns_409_When_Same_Status()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Shipped",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var result = await controller.ChangeOrderStatus(order.Id, new AdminController.UpdateOrderStatusRequest { Status = "Shipped" });
+
+            Assert.IsType<ConflictObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Allows_Created_To_Paid()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Created",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var request = new AdminController.UpdateOrderStatusRequest { Status = "Paid" };
+
+            var result = await controller.ChangeOrderStatus(order.Id, request);
+
+            Assert.IsType<OkObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+
+            Assert.NotNull(updatedOrder);
+            Assert.Equal(updatedOrder.Status, request.Status);
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Allows_Created_To_Cancelled()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Created",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var request = new AdminController.UpdateOrderStatusRequest { Status = "Cancelled" };
+
+            var result = await controller.ChangeOrderStatus(order.Id, request);
+
+            Assert.IsType<OkObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+
+            Assert.NotNull(updatedOrder);
+            Assert.Equal(updatedOrder.Status, request.Status);
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Denies_Created_To_Shipped()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Created",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var request = new AdminController.UpdateOrderStatusRequest { Status = "Shipped" };
+
+            var result = await controller.ChangeOrderStatus(order.Id, request);
+
+            Assert.IsType<ConflictObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+
+            Assert.NotNull(updatedOrder);
+            Assert.Equal(updatedOrder.Status, "Created");
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Allows_Paid_To_Shipped()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Paid",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var request = new AdminController.UpdateOrderStatusRequest { Status = "Shipped" };
+
+            var result = await controller.ChangeOrderStatus(order.Id, request);
+
+            Assert.IsType<OkObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+
+            Assert.NotNull(updatedOrder);
+            Assert.Equal(updatedOrder.Status, request.Status);
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Allows_Paid_To_Cancelled()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Paid",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var request = new AdminController.UpdateOrderStatusRequest { Status = "Cancelled" };
+
+            var result = await controller.ChangeOrderStatus(order.Id, request);
+
+            Assert.IsType<OkObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+
+            Assert.NotNull(updatedOrder);
+            Assert.Equal(updatedOrder.Status, request.Status);
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Denies_Paid_To_Completed()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Paid",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var request = new AdminController.UpdateOrderStatusRequest { Status = "Completed" };
+
+            var result = await controller.ChangeOrderStatus(order.Id, request);
+
+            Assert.IsType<ConflictObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+
+            Assert.NotNull(updatedOrder);
+            Assert.Equal(updatedOrder.Status, "Paid");
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Allows_Shipped_To_Completed()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Shipped",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var request = new AdminController.UpdateOrderStatusRequest { Status = "Completed" };
+
+            var result = await controller.ChangeOrderStatus(order.Id, request);
+
+            Assert.IsType<OkObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+
+            Assert.NotNull(updatedOrder);
+            Assert.Equal(updatedOrder.Status, request.Status);
+        }
+
+        [Fact]
+        public async Task ChangeOrderStatus_Denies_Shipped_To_Paid()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var order = new Order
+            {
+                UserId = "user-2",
+                Status = "Shipped",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var request = new AdminController.UpdateOrderStatusRequest { Status = "Paid" };
+
+            var result = await controller.ChangeOrderStatus(order.Id, request);
+
+            Assert.IsType<ConflictObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+
+            Assert.NotNull(updatedOrder);
+            Assert.Equal(updatedOrder.Status, "Shipped");
         }
     }
 }
