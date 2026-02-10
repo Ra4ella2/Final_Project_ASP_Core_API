@@ -1,0 +1,6 @@
+@BigElephant_HostAddress = http://localhost:5082
+
+GET {{BigElephant_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

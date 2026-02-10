@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36414.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigElephant", "BigElephant\BigElephant.csproj", "{F3C90A47-37B1-4501-9F2F-65EF7C3A6AB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigElephantTest", "BigElephantTest\BigElephantTest.csproj", "{99781B8B-8406-41BE-BF2F-8DC0196C6107}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F3C90A47-37B1-4501-9F2F-65EF7C3A6AB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3C90A47-37B1-4501-9F2F-65EF7C3A6AB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3C90A47-37B1-4501-9F2F-65EF7C3A6AB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3C90A47-37B1-4501-9F2F-65EF7C3A6AB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99781B8B-8406-41BE-BF2F-8DC0196C6107}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99781B8B-8406-41BE-BF2F-8DC0196C6107}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99781B8B-8406-41BE-BF2F-8DC0196C6107}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99781B8B-8406-41BE-BF2F-8DC0196C6107}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4480DE43-746E-4B86-98B2-5C1442798CC9}
+	EndGlobalSection
+EndGlobal
