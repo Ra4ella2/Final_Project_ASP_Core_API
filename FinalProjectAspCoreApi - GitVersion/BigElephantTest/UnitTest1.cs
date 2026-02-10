@@ -3,6 +3,7 @@ using BigElephant.Controllers;
 using BigElephant.Data;
 using BigElephant.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
 using Microsoft.OpenApi.Validations;
@@ -10,12 +11,22 @@ using Microsoft.VisualBasic;
 using Newtonsoft.Json.Linq;
 using System.Windows.Markup;
 using Xunit;
+using Moq;
+using System.Collections;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace BigElephantTest
 {
     public class UnitTest1
     {
+        //
+        // Test for AdminController
+        //
+
+        //
+        // Test for product's logic
+        //
+
         [Fact]
         public async Task PostNewProduct_Creates_Product()
         {
@@ -343,6 +354,10 @@ namespace BigElephantTest
 
             var NotFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         }
+
+        //
+        // Test for order's logic
+        //
 
         [Fact]
         public async Task GetOrderById_Returns_404_When_Not_Found()
@@ -797,6 +812,93 @@ namespace BigElephantTest
 
             Assert.NotNull(updatedOrder);
             Assert.Equal(updatedOrder.Status, "Shipped");
+        }
+
+        //
+        // Test for UserController
+        //
+
+        [Fact]
+        public async Task GetProducts_Returns_Only_Active_And_NotDeleted()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            var product1 = new Product
+            {
+                Name = "iPhone 15",
+                Price = 999,
+                Stock = 10,
+                IsActive = true,
+                IsDeleted = false
+            };
+            var product2 = new Product
+            {
+                Name = "iPhone 16",
+                Price = 999,
+                Stock = 10,
+                IsActive = false,
+                IsDeleted = false
+            };
+            var product3 = new Product
+            {
+                Name = "iPhone 17",
+                Price = 999,
+                Stock = 10,
+                IsActive = false,
+                IsDeleted = true
+            };
+
+            db.Products.Add(product1);
+            db.Products.Add(product2);
+            db.Products.Add(product3);
+
+            await db.SaveChangesAsync();
+
+            var result = controller.GetProducts();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var listProducts = Assert.IsAssignableFrom<IEnumerable<Product>>(okResult.Value).ToList();
+
+            Assert.NotNull(listProducts);
+            Assert.Equal(listProducts.Count, 1);
+        }
+
+        [Fact]
+        public async Task GetProducts_Empty_When_All_Inactive_Or_Deleted()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            var product2 = new Product
+            {
+                Name = "iPhone 16",
+                Price = 999,
+                Stock = 10,
+                IsActive = false,
+                IsDeleted = false
+            };
+            var product3 = new Product
+            {
+                Name = "iPhone 17",
+                Price = 999,
+                Stock = 10,
+                IsActive = false,
+                IsDeleted = true
+            };
+
+            db.Products.Add(product2);
+            db.Products.Add(product3);
+
+            await db.SaveChangesAsync();
+
+            var result = controller.GetProducts();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var listProducts = Assert.IsAssignableFrom<IEnumerable<Product>>(okResult.Value).ToList();
+
+            Assert.NotNull(listProducts);
+            Assert.Empty(listProducts);
         }
     }
 }
