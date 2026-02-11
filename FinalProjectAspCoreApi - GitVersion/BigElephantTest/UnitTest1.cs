@@ -2,17 +2,21 @@ using Azure.Core.Pipeline;
 using BigElephant.Controllers;
 using BigElephant.Data;
 using BigElephant.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Microsoft.OpenApi.Validations;
 using Microsoft.VisualBasic;
+using Moq;
 using Newtonsoft.Json.Linq;
+using System.Collections;
+using System.Security.Claims;
 using System.Windows.Markup;
 using Xunit;
-using Moq;
-using System.Collections;
+using Xunit.Abstractions;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace BigElephantTest
@@ -899,6 +903,287 @@ namespace BigElephantTest
 
             Assert.NotNull(listProducts);
             Assert.Empty(listProducts);
+        }
+
+        [Fact]
+        public async Task PostOrder_Returns_400_When_Items_Null()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var result = await controller.PostOrder(null);
+
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task PostOrder_Returns_400_When_Items_Empty()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var result = await controller.PostOrder(new ListUsersProducts { Items = new List<UsersProducts> { } });
+
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task PostOrder_Returns_404_When_Product_Not_Found()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var items = new List<UsersProducts>
+            {
+                new UsersProducts { ProductId = 999, Quantity = 1 }
+            };
+
+            var result = await controller.PostOrder(new ListUsersProducts { Items = items });
+
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task PostOrder_Returns_409_When_Product_Inactive()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var product = new Product
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 1,
+                IsActive = false,
+                IsDeleted = false
+            };
+            db.Products.Add(product);
+            await db.SaveChangesAsync();
+
+            var items = new List<UsersProducts> { new UsersProducts { ProductId = product.Id, Quantity = 1 } };
+
+            var result = await controller.PostOrder(new ListUsersProducts { Items = items });
+
+            Assert.IsType<ConflictObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task PostOrder_Returns_409_When_Not_Enough_Stock()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var product = new Product
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 1,
+                IsActive = true,
+                IsDeleted = false
+            };
+            db.Products.Add(product);
+            await db.SaveChangesAsync();
+
+            var items = new List<UsersProducts> { new UsersProducts { ProductId = product.Id, Quantity = 2 } };
+
+            var result = await controller.PostOrder(new ListUsersProducts { Items = items });
+
+            var updatedProduct = await db.Products.FindAsync(product.Id);
+
+            Assert.NotNull(updatedProduct);
+            Assert.Equal(1, updatedProduct.Stock);
+            Assert.IsType<ConflictObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task PostOrder_Creates_Order_And_Decreases_Stock_When_Valid()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var product = new Product
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 10,
+                IsActive = true,
+                IsDeleted = false
+            };
+            db.Products.Add(product);
+            await db.SaveChangesAsync();
+
+            var items = new List<UsersProducts> { new UsersProducts { ProductId = product.Id, Quantity = 1 } };
+
+            var result = await controller.PostOrder(new ListUsersProducts { Items = items });
+
+            Assert.IsType<CreatedResult>(result);
+
+            var updatedProduct = await db.Products.FindAsync(product.Id);
+
+            Assert.NotNull(updatedProduct);
+            Assert.Equal(9, updatedProduct.Stock);
+
+            var order = Assert.Single(db.Orders);
+            Assert.Equal("user-1", order.UserId);
+            Assert.Equal("Created", order.Status);
+
+            var orderItem = Assert.Single(db.OrderItems);
+            Assert.Equal(1, orderItem.Quantity);
+            Assert.Equal(100, orderItem.UnitPrice);
+            Assert.Equal(product.Id, orderItem.ProductId);
+        }
+
+        [Fact]
+        public async Task PostOrder_Fixes_UnitPrice_At_Order_Time()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var product = new Product
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 10,
+                IsActive = true,
+                IsDeleted = false
+            };
+            db.Products.Add(product);
+            await db.SaveChangesAsync();
+
+            var items = new List<UsersProducts> { new UsersProducts { ProductId = product.Id, Quantity = 1 } };
+
+            var result = await controller.PostOrder(new ListUsersProducts { Items = items });
+
+            Assert.IsType<CreatedResult>(result);
+
+            var updateProductDb = await db.Products.FindAsync(product.Id);
+            Assert.NotNull(updateProductDb);
+            updateProductDb.Price = 1000;
+            await db.SaveChangesAsync();
+
+            var orderItem = Assert.Single(db.OrderItems);
+            Assert.NotNull(orderItem);
+            Assert.Equal(100, orderItem.UnitPrice);
+            var productAfter = await db.Products.FindAsync(product.Id);
+            Assert.NotNull(productAfter);
+            Assert.Equal(1000, productAfter.Price);
+        }
+
+        [Fact]
+        public async Task PostOrder_Returns_400_When_Quantity_Invalid()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var product = new Product
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 10,
+                IsActive = true,
+                IsDeleted = false
+            };
+            db.Products.Add(product);
+            await db.SaveChangesAsync();
+
+            var items = new List<UsersProducts> { new UsersProducts { ProductId = product.Id, Quantity = 0 } };
+
+            var result = await controller.PostOrder(new ListUsersProducts { Items = items });
+
+            Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Empty(db.Orders);
+
+            var updatedProduct = await db.Products.FindAsync(product.Id);
+            Assert.NotNull(updatedProduct);
+            Assert.Equal(10, updatedProduct.Stock);  
         }
     }
 }
