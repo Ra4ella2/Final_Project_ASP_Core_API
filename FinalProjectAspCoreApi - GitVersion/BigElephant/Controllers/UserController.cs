@@ -55,9 +55,10 @@ public class UserController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         var orders = await _db.Orders
+            .AsNoTracking()
+            .Where(o => o.UserId == userId)
             .Include(o => o.Items)
             .ThenInclude(i => i.Product)
-            .Where(o => o.UserId == userId)
             .Select(o => new
             {
                 o.Id,
@@ -85,9 +86,9 @@ public class UserController : ControllerBase
 
         var order = await _db.Orders
             .AsNoTracking()
+            .Where(o => o.Id == id && o.UserId == userId)
             .Include(o => o.Items)
             .ThenInclude(i => i.Product)
-            .Where(o => o.Id == id && o.UserId == userId)
             .Select(o => new
             {
                 o.Id,

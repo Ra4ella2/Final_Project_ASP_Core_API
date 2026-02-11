@@ -13,6 +13,7 @@ using Microsoft.VisualBasic;
 using Moq;
 using Newtonsoft.Json.Linq;
 using System.Collections;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Windows.Markup;
 using Xunit;
@@ -1183,7 +1184,389 @@ namespace BigElephantTest
 
             var updatedProduct = await db.Products.FindAsync(product.Id);
             Assert.NotNull(updatedProduct);
-            Assert.Equal(10, updatedProduct.Stock);  
+            Assert.Equal(10, updatedProduct.Stock);
+        }
+
+        [Fact]
+        public async Task GetMyOrders_Returns_Only_Current_User_Orders()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var product = new Product
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 10,
+                IsActive = true,
+                IsDeleted = false
+            };
+            db.Products.Add(product);
+            await db.SaveChangesAsync();
+
+            var order1 = new Order
+            {
+                UserId = "user-1",
+                Status = "Created",
+                CreatedAt = DateTime.UtcNow
+            };
+            order1.Items.Add(new OrderItem
+            {
+                ProductId = product.Id,
+                Quantity = 1,
+                UnitPrice = product.Price
+            });
+
+            var order2 = new Order
+            {
+                UserId = "user-2",
+                Status = "Created",
+                CreatedAt = DateTime.UtcNow
+            };
+            order2.Items.Add(new OrderItem
+            {
+                ProductId = product.Id,
+                Quantity = 1,
+                UnitPrice = product.Price
+            });
+
+            db.Orders.AddRange(order1, order2);
+            await db.SaveChangesAsync();
+
+            var result = await controller.GetMyOrders();
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+
+            var orders = Assert
+                .IsAssignableFrom<IEnumerable>(okResult.Value)
+                .Cast<object>()
+                .ToList();
+
+            Assert.Single(orders);
+        }
+
+        [Fact]
+        public async Task GetMyOrdersById_Returns_404_When_Not_Found()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var result = await controller.GetMyOrdersById(1);
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetMyOrdersById_Returns_404_When_Order_Belongs_To_Other_User()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var product = new Product
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 10,
+                IsActive = true,
+                IsDeleted = false
+            };
+            db.Products.Add(product);
+            await db.SaveChangesAsync();
+
+            var order1 = new Order
+            {
+                UserId = "user-2",
+                Status = "Created",
+                CreatedAt = DateTime.UtcNow
+            };
+            order1.Items.Add(new OrderItem
+            {
+                ProductId = product.Id,
+                Quantity = 1,
+                UnitPrice = product.Price
+            });
+            db.Orders.Add(order1);
+            await db.SaveChangesAsync();
+
+            var result = await controller.GetMyOrdersById(order1.Id);
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task GetMyOrdersById_Returns_Order_With_Items_When_Owned()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var product1 = new Product
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 10,
+                IsActive = true,
+                IsDeleted = false
+            };
+            db.Products.Add(product1);
+            await db.SaveChangesAsync();
+
+            var order1 = new Order
+            {
+                UserId = "user-1",
+                Status = "Created",
+                CreatedAt = DateTime.UtcNow
+            };
+            order1.Items.Add(new OrderItem
+            {
+                ProductId = product1.Id,
+                Quantity = 1,
+                UnitPrice = product1.Price
+            });
+            db.Orders.Add(order1);
+            await db.SaveChangesAsync();
+
+            var result = await controller.GetMyOrdersById(order1.Id);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+
+            var order = okResult.Value!;
+
+            var id = (int)order.GetType()!.GetProperty("Id")!.GetValue(order)!;
+            var status = (string)order.GetType()!.GetProperty("Status")!.GetValue(order)!;
+            var itemsObj = order.GetType().GetProperty("items")!.GetValue(order)!;
+            var items = ((IEnumerable)itemsObj)
+                .Cast<object>()
+                .ToList();
+            Assert.Equal(id, order1.Id);
+            Assert.Equal(status, order1.Status);
+            Assert.Single(items);
+
+            var product = items[0];
+            var idPr = (int)product.GetType()!.GetProperty("ProductId")!.GetValue(product)!;
+            var quantity = (int)product.GetType()!.GetProperty("Quantity")!.GetValue(product)!;
+            var unitPrice = (decimal)product.GetType()!.GetProperty("UnitPrice")!.GetValue(product)!;
+            var productName = (string)product.GetType().GetProperty("productName")!.GetValue(product)!;
+            Assert.Equal(idPr, product1.Id);
+            Assert.Equal(quantity, order1.Items[0].Quantity);
+            Assert.Equal(unitPrice, order1.Items[0].UnitPrice);
+            Assert.Equal(product1.Name, productName);
+        }
+
+        [Fact]
+        public async Task CancelOrder_Returns_404_When_Not_Found()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var result = await controller.ChangeOrderStatus(1);
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task CancelOrder_Returns_409_When_Completed()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var order = new Order
+            {
+                UserId = "user-1",
+                CreatedAt = DateTime.Now,
+                Status = "Completed"
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var result = await controller.ChangeOrderStatus(order.Id);
+            Assert.IsType<ConflictObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+            Assert.Equal("Completed", updatedOrder.Status);
+        }
+
+        [Fact]
+        public async Task CancelOrder_Returns_409_When_Shipped()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var order = new Order
+            {
+                UserId = "user-1",
+                CreatedAt = DateTime.Now,
+                Status = "Shipped"
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var result = await controller.ChangeOrderStatus(order.Id);
+            Assert.IsType<ConflictObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+            Assert.Equal("Shipped", updatedOrder.Status);
+        }
+
+        [Fact]
+        public async Task CancelOrder_Returns_200_When_Already_Cancelled()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+            var order = new Order
+            {
+                UserId = "user-1",
+                CreatedAt = DateTime.Now,
+                Status = "Cancelled"
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var result = await controller.ChangeOrderStatus(order.Id);
+            Assert.IsType<OkObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order.Id);
+            Assert.Equal("Cancelled", updatedOrder.Status);
+        }
+
+        [Fact]
+        public async Task CancelOrder_Sets_Status_Cancelled_And_Restores_Stock()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new UserController(db);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(
+                        new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") },
+                            "TestAuth"))
+                }
+            };
+
+
+            var product1 = new Product
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 10,
+                IsActive = true,
+                IsDeleted = false
+            };
+            db.Products.Add(product1);
+            await db.SaveChangesAsync();
+
+            var order1 = new Order
+            {
+                UserId = "user-1",
+                Status = "Created",
+                CreatedAt = DateTime.UtcNow
+            };
+            order1.Items.Add(new OrderItem
+            {
+                ProductId = product1.Id,
+                Quantity = 2,
+                UnitPrice = product1.Price
+            });
+            db.Orders.Add(order1);
+            product1.Stock = 8;
+            await db.SaveChangesAsync();
+
+            var result = await controller.ChangeOrderStatus(order1.Id);
+            Assert.IsType<OkObjectResult>(result);
+
+            var updatedOrder = await db.Orders.FindAsync(order1.Id);
+            Assert.Equal("Cancelled", updatedOrder.Status);
+
+            var updatedProduct = await db.Products.FindAsync(product1.Id);
+            Assert.Equal(10, updatedProduct.Stock);
         }
     }
 }
