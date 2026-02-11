@@ -1568,5 +1568,197 @@ namespace BigElephantTest
             var updatedProduct = await db.Products.FindAsync(product1.Id);
             Assert.Equal(10, updatedProduct.Stock);
         }
+
+        //
+        // Test for AccountController
+        //
+
+        [Fact]
+        public async Task Register_Returns_400_When_Email_Already_Exists()
+        {
+            var userManagerMock = TestHelpers.MockUserManager();
+            var config = TestHelpers.BuildJwtConfig();
+
+            userManagerMock
+                .Setup(um => um.FindByEmailAsync("test@test.com"))
+                .ReturnsAsync(new AppUser { Id = "1", Email = "test@test.com", UserName = "test@test.com" });
+
+            var controller = new AccountController(userManagerMock.Object, config);
+
+            var dto = new RegisterDto
+            {
+                Email = "test@test.com",
+                Password = "Password123!"
+            };
+
+            var result = await controller.Register(dto);
+
+            var bad = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("EMAIL_ALREADY_EXISTS", bad.Value);
+        }
+
+        [Fact]
+        public async Task Register_Returns_400_When_Create_Fails()
+        {
+            var userManagerMock = TestHelpers.MockUserManager();
+            var config = TestHelpers.BuildJwtConfig();
+
+            userManagerMock
+                .Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync((AppUser?)null);
+
+            userManagerMock
+                .Setup(x => x.CreateAsync(It.IsAny<AppUser>(), It.IsAny<string>()))
+                .ReturnsAsync(IdentityResult.Failed(
+                    new IdentityError { Description = "Password too weak" }));
+
+            var controller = new AccountController(userManagerMock.Object, config);
+
+            var dto = new RegisterDto
+            {
+                Email = "new@test.com",
+                Password = "123"
+            };
+
+            var result = await controller.Register(dto);
+
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task Register_Returns_200_When_Success()
+        {
+            var userManagerMock = TestHelpers.MockUserManager();
+            var config = TestHelpers.BuildJwtConfig();
+
+            userManagerMock
+                .Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync((AppUser?)null);
+
+            userManagerMock
+                .Setup(x => x.CreateAsync(It.IsAny<AppUser>(), It.IsAny<string>()))
+                .ReturnsAsync(IdentityResult.Success);
+
+            userManagerMock
+                .Setup(x => x.AddToRoleAsync(It.IsAny<AppUser>(), It.IsAny<string>()))
+                .ReturnsAsync(IdentityResult.Success);
+
+            var controller = new AccountController(userManagerMock.Object, config);
+
+            var dto = new RegisterDto
+            {
+                Email = "new@test.com",
+                Password = "Password123!"
+            };
+
+            var result = await controller.Register(dto);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal("REGISTER_SUCCESS", ok.Value);
+        }
+
+        [Fact]
+        public async Task Login_Returns_401_When_User_Not_Found()
+        {
+            var userManagerMock = TestHelpers.MockUserManager();
+            var config = TestHelpers.BuildJwtConfig();
+
+            userManagerMock
+                .Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync((AppUser?)null);
+
+            var controller = new AccountController(userManagerMock.Object, config);
+
+            var dto = new LoginDto
+            {
+                Email = "wrong@test.com",
+                Password = "Password123!"
+            };
+
+            var result = await controller.Login(dto);
+
+            var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
+            Assert.Equal("INVALID_CREDENTIALS", unauthorized.Value);
+        }
+
+        [Fact]
+        public async Task Login_Returns_401_When_Password_Wrong()
+        {
+            var userManagerMock = TestHelpers.MockUserManager();
+            var config = TestHelpers.BuildJwtConfig();
+
+            var user = new AppUser
+            {
+                Id = "1",
+                Email = "test@test.com",
+                UserName = "test@test.com"
+            };
+
+            userManagerMock
+                .Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync(user);
+
+            userManagerMock
+                .Setup(x => x.CheckPasswordAsync(user, It.IsAny<string>()))
+                .ReturnsAsync(false);
+
+            var controller = new AccountController(userManagerMock.Object, config);
+
+            var dto = new LoginDto
+            {
+                Email = "test@test.com",
+                Password = "wrong"
+            };
+
+            var result = await controller.Login(dto);
+
+            var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
+            Assert.Equal("INVALID_CREDENTIALS", unauthorized.Value);
+        }
+
+        [Fact]
+        public async Task Login_Returns_200_With_Token_When_Valid()
+        {
+            var userManagerMock = TestHelpers.MockUserManager();
+            var config = TestHelpers.BuildJwtConfig();
+
+            var user = new AppUser
+            {
+                Id = "1",
+                Email = "test@test.com",
+                UserName = "test@test.com"
+            };
+
+            userManagerMock
+                .Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync(user);
+
+            userManagerMock
+                .Setup(x => x.CheckPasswordAsync(user, It.IsAny<string>()))
+                .ReturnsAsync(true);
+
+            userManagerMock
+                .Setup(x => x.GetRolesAsync(user))
+                .ReturnsAsync(new List<string> { "Customer" });
+
+            var controller = new AccountController(userManagerMock.Object, config);
+
+            var dto = new LoginDto
+            {
+                Email = "test@test.com",
+                Password = "Password123!"
+            };
+
+            var result = await controller.Login(dto);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+
+            var obj = ok.Value!;
+            var tokenProp = obj.GetType().GetProperty("accessToken");
+            var token = tokenProp!.GetValue(obj);
+
+            Assert.NotNull(token);
+            Assert.False(string.IsNullOrWhiteSpace(token!.ToString()));
+        }
     }
 }
