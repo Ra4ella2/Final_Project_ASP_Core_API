@@ -823,6 +823,10 @@ namespace BigElephantTest
         // Test for UserController
         //
 
+        //
+        // Test for product's logic
+        //
+
         [Fact]
         public async Task GetProducts_Returns_Only_Active_And_NotDeleted()
         {
@@ -905,6 +909,10 @@ namespace BigElephantTest
             Assert.NotNull(listProducts);
             Assert.Empty(listProducts);
         }
+
+        //
+        // Test for order's logic
+        //
 
         [Fact]
         public async Task PostOrder_Returns_400_When_Items_Null()
@@ -1573,6 +1581,10 @@ namespace BigElephantTest
         // Test for AccountController
         //
 
+        //
+        // Test for regist's logic
+        //
+
         [Fact]
         public async Task Register_Returns_400_When_Email_Already_Exists()
         {
@@ -1656,6 +1668,10 @@ namespace BigElephantTest
             var ok = Assert.IsType<OkObjectResult>(result);
             Assert.Equal("REGISTER_SUCCESS", ok.Value);
         }
+
+        //
+        // Test for login's logic
+        //
 
         [Fact]
         public async Task Login_Returns_401_When_User_Not_Found()
