@@ -70,6 +70,17 @@ public class AdminController : ControllerBase
         public string Status { get; set; } = null!;
     }
 
+    private void LogAdminAction(string action)
+    {
+        var adminId = User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "system";
+
+        _db.AdminLogs.Add(new AdminLog
+        {
+            AdminId = adminId,
+            CreatedAt = DateTime.UtcNow,
+            Action = action
+        });
+    }
 
     [Authorize(Roles = "Admin")]
     [HttpGet("product")]
@@ -108,6 +119,7 @@ public class AdminController : ControllerBase
         };
 
         _db.Products.Add(product);
+        LogAdminAction($"Created product: {product.Name}, Price: {product.Price}, Stock: {product.Stock}");
         await _db.SaveChangesAsync();
 
         return Created("You added product", product);
@@ -125,6 +137,7 @@ public class AdminController : ControllerBase
         }
         product.Stock = request.Stock;
         await _db.SaveChangesAsync();
+        LogAdminAction($"Changed stock of product {product.Id} to {product.Stock}");
         return Ok("You changed product's stock");
     }
 
@@ -139,6 +152,7 @@ public class AdminController : ControllerBase
             return NotFound("There isn't product with that's id");
         }
         product.IsActive = request.IsActive;
+        LogAdminAction($"Changed active state of product {product.Id} to {product.IsActive}");
         await _db.SaveChangesAsync();
         return Ok("You changed product's state of active");
     }
@@ -154,6 +168,7 @@ public class AdminController : ControllerBase
             return NotFound("There isn't product with that's id");
         }
         product.Name = request.Name.Trim();
+        LogAdminAction($"Changed name of product {product.Id} to {product.Name}");
         await _db.SaveChangesAsync();
         return Ok("You changed product's name");
     }
@@ -169,6 +184,7 @@ public class AdminController : ControllerBase
             return NotFound("There isn't product with that's id");
         }
         product.Price = request.Price;
+        LogAdminAction($"Changed price of product {product.Id} to {product.Price}");
         await _db.SaveChangesAsync();
         return Ok("You changed product's price");
     }
@@ -185,6 +201,7 @@ public class AdminController : ControllerBase
         }
         product.IsDeleted = true;
         product.IsActive = false;
+        LogAdminAction($"Soft deleted product {product.Id}");
         await _db.SaveChangesAsync();
         return Ok("You deleted product");
     }
@@ -201,6 +218,7 @@ public class AdminController : ControllerBase
         }
         product.IsDeleted = false;
         product.IsActive = true;
+        LogAdminAction($"Restored product {product.Id}");
         await _db.SaveChangesAsync();
         return Ok("You returned product");
     }
@@ -257,6 +275,7 @@ public class AdminController : ControllerBase
             return Conflict($"Cannot change status from {order.Status} to {status}");
         }
         order.Status = status;
+        LogAdminAction($"Changed order {order.Id} status to {status}");
         await _db.SaveChangesAsync();
         return Ok(new { order.Id, order.Status });
     }
@@ -285,7 +304,8 @@ public class AdminController : ControllerBase
                 }).ToList()
             })
             .ToListAsync();
-
+        LogAdminAction("Viewed all orders");
+        await _db.SaveChangesAsync();
         return Ok(orders);
     }
 
@@ -315,7 +335,8 @@ public class AdminController : ControllerBase
 
         if (order == null)
             return NotFound("There isn't element with that's id");
-
+        LogAdminAction($"Viewed order {id}");
+        await _db.SaveChangesAsync();
         return Ok(order);
     }
 
@@ -330,7 +351,8 @@ public class AdminController : ControllerBase
                 u.Email
             })
             .ToListAsync();
-
+        LogAdminAction("Viewed users list");
+        await _db.SaveChangesAsync();
         return Ok(users);
     }
 }

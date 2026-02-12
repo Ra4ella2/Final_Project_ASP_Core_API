@@ -11,6 +11,7 @@ namespace BigElephant.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<AdminLog> AdminLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
