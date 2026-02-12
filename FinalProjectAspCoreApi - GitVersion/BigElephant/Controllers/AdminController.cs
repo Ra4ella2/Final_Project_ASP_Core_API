@@ -42,6 +42,7 @@ public class AdminController : ControllerBase
         public int Stock { get; set; }
 
         public bool IsActive { get; set; } = true;
+        public string? ImageUrl { get; set; }
     }
 
     public class UpdateProductStockRequest
@@ -63,6 +64,10 @@ public class AdminController : ControllerBase
     {
         [Range(0.01, double.MaxValue)]
         public decimal Price { get; set; }
+    }
+    public class UpdateProductImageRequest
+    {
+        public string? ImageUrl { get; set; }
     }
     public class UpdateOrderStatusRequest
     {
@@ -115,7 +120,8 @@ public class AdminController : ControllerBase
             Name = request.Name.Trim(),
             Price = request.Price,
             Stock = request.Stock,
-            IsActive = request.IsActive
+            IsActive = request.IsActive,
+            ImageUrl = request.ImageUrl
         };
 
         _db.Products.Add(product);
@@ -136,8 +142,8 @@ public class AdminController : ControllerBase
             return NotFound("There isn't product with that's id");
         }
         product.Stock = request.Stock;
-        await _db.SaveChangesAsync();
         LogAdminAction($"Changed stock of product {product.Id} to {product.Stock}");
+        await _db.SaveChangesAsync();
         return Ok("You changed product's stock");
     }
 
@@ -189,6 +195,20 @@ public class AdminController : ControllerBase
         return Ok("You changed product's price");
     }
 
+    [Authorize(Roles = "Admin")]
+    [HttpPatch("product/{id}/image")]
+    public async Task<IActionResult> PatchProductImage(int id, UpdateProductImageRequest request)
+    {
+        var product = await _db.Products.FindAsync(id);
+        if (product == null)
+            return NotFound("There isn't product with that's id");
+
+        product.ImageUrl = request.ImageUrl;
+        LogAdminAction($"Changed image of product {product.Id}");
+        await _db.SaveChangesAsync();
+
+        return Ok("Image updated");
+    }
 
     [Authorize(Roles = "Admin")]
     [HttpDelete("product/{id}/delete")]

@@ -21,5 +21,6 @@ namespace BigElephant.Models
         // Доступен ли товар для покупки
         public bool IsActive { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
+        public string? ImageUrl { get; set; }
     }
 }

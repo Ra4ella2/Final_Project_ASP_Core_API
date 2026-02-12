@@ -285,6 +285,78 @@ namespace BigElephantTest
         }
 
         [Fact]
+        public async Task PostNewProduct_Sets_ImageUrl()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var request = new AdminController.CreateProductRequest
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 10,
+                IsActive = true,
+                ImageUrl = "https://example.com/p1.jpg"
+            };
+
+            var result = await controller.PostNewProduct(request);
+
+            var created = Assert.IsType<CreatedResult>(result);
+            var product = Assert.IsType<Product>(created.Value);
+
+            Assert.Equal("https://example.com/p1.jpg", product.ImageUrl);
+
+            var dbProduct = Assert.Single(db.Products);
+            Assert.Equal("https://example.com/p1.jpg", dbProduct.ImageUrl);
+        }
+
+        [Fact]
+        public async Task PatchProductImage_Updates_ImageUrl()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var product = new Product
+            {
+                Name = "Test",
+                Price = 100,
+                Stock = 10,
+                IsActive = true,
+                IsDeleted = false,
+                ImageUrl = null
+            };
+            db.Products.Add(product);
+            await db.SaveChangesAsync();
+
+            var req = new AdminController.UpdateProductImageRequest
+            {
+                ImageUrl = "https://example.com/new.jpg"
+            };
+
+            var result = await controller.PatchProductImage(product.Id, req);
+
+            Assert.IsType<OkObjectResult>(result);
+
+            var updated = await db.Products.FindAsync(product.Id);
+            Assert.NotNull(updated);
+            Assert.Equal("https://example.com/new.jpg", updated.ImageUrl);
+        }
+
+        [Fact]
+        public async Task PatchProductImage_Returns_404_When_Not_Found()
+        {
+            var db = TestDbContextFactory.Create();
+            var controller = new AdminController(db, userManager: null!);
+
+            var result = await controller.PatchProductImage(999, new AdminController.UpdateProductImageRequest
+            {
+                ImageUrl = "https://example.com/new.jpg"
+            });
+
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
+        [Fact]
         public async Task DeleteProduct_Sets_IsDeleted_True_And_Disables_Product()
         {
             var db = TestDbContextFactory.Create();

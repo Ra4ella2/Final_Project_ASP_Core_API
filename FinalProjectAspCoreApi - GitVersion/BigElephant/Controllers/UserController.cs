@@ -41,7 +41,6 @@ public class UserController : ControllerBase
         _db = dbContext;
     }
 
-    [Authorize]
     [HttpGet("products")]
     public IActionResult GetProducts()
     {
