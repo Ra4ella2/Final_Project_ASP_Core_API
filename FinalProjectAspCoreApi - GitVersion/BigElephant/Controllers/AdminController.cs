@@ -30,6 +30,15 @@ public class AdminController : ControllerBase
         _userManager = userManager;
     }
 
+    public class CreateAdminRequest
+    {
+        [Required, EmailAddress]
+        public string Email { get; set; } = null!;
+
+        [Required, MinLength(6)]
+        public string Password { get; set; } = null!;
+    }
+
     public class CreateProductRequest
     {
         [Required, MaxLength(200)]
@@ -87,6 +96,34 @@ public class AdminController : ControllerBase
         });
     }
 
+    [Authorize(Roles = "SuperAdmin")]
+    [HttpPost("create-admin")]
+    public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest request, [FromServices] UserManager<AppUser> userManager, [FromServices] RoleManager<IdentityRole> roleManager)
+    {
+        // роль Admin должна существовать
+        if (!await roleManager.RoleExistsAsync("Admin"))
+            await roleManager.CreateAsync(new IdentityRole("Admin"));
+
+        var email = request.Email.Trim().ToLowerInvariant();
+
+        var user = await userManager.FindByEmailAsync(email);
+        if (user != null)
+            return Conflict("User already exists");
+
+        user = new AppUser { UserName = email, Email = email };
+        var createRes = await userManager.CreateAsync(user, request.Password);
+        if (!createRes.Succeeded)
+            return BadRequest(createRes.Errors.Select(e => e.Description));
+
+        await userManager.AddToRoleAsync(user, "Admin");
+
+        LogAdminAction($"Created admin user: {email}");
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new { email, role = "Admin" });
+    }
+
     [Authorize(Roles = "Admin")]
     [HttpGet("product")]
     public async Task<IActionResult> GetProducts()
@@ -142,7 +179,6 @@ public class AdminController : ControllerBase
             return NotFound("There isn't product with that's id");
         }
         product.Stock = request.Stock;
-        LogAdminAction($"Changed stock of product {product.Id} to {product.Stock}");
         await _db.SaveChangesAsync();
         return Ok("You changed product's stock");
     }
@@ -158,7 +194,6 @@ public class AdminController : ControllerBase
             return NotFound("There isn't product with that's id");
         }
         product.IsActive = request.IsActive;
-        LogAdminAction($"Changed active state of product {product.Id} to {product.IsActive}");
         await _db.SaveChangesAsync();
         return Ok("You changed product's state of active");
     }
@@ -174,7 +209,6 @@ public class AdminController : ControllerBase
             return NotFound("There isn't product with that's id");
         }
         product.Name = request.Name.Trim();
-        LogAdminAction($"Changed name of product {product.Id} to {product.Name}");
         await _db.SaveChangesAsync();
         return Ok("You changed product's name");
     }
@@ -190,21 +224,20 @@ public class AdminController : ControllerBase
             return NotFound("There isn't product with that's id");
         }
         product.Price = request.Price;
-        LogAdminAction($"Changed price of product {product.Id} to {product.Price}");
         await _db.SaveChangesAsync();
         return Ok("You changed product's price");
     }
 
     [Authorize(Roles = "Admin")]
     [HttpPatch("product/{id}/image")]
-    public async Task<IActionResult> PatchProductImage(int id, UpdateProductImageRequest request)
+    public async Task<IActionResult> PatchProductImage(int id, [FromBody] UpdateProductImageRequest request)
     {
         var product = await _db.Products.FindAsync(id);
         if (product == null)
             return NotFound("There isn't product with that's id");
 
         product.ImageUrl = request.ImageUrl;
-        LogAdminAction($"Changed image of product {product.Id}");
+        LogAdminAction($"Product {product.Id} was changed");
         await _db.SaveChangesAsync();
 
         return Ok("Image updated");
@@ -340,6 +373,7 @@ public class AdminController : ControllerBase
             .Select(o => new
             {
                 o.Id,
+                o.UserId,
                 o.CreatedAt,
                 o.Status,
                 items = o.Items.Select(i => new
