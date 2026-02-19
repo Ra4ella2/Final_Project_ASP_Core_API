@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">BigElephant</div>
+     <div class="h-actions">
+      <button class="btn" id="ordersBtn" type="button">Мои заказы</button>
+
+      <button class="btn" id="cartBtn" type="button">
+        Корзина (<span id="cartCount">0</span>)
+      </button>
+
+      <div id="userInfo" class="userInfo"></div>
+      <button class="btn" id="headerAuthBtn" type="button">Вход</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="row">
+      <h1 class="title">Товары</h1>
+    </div>
+
+    <div id="status" class="muted small"></div>
+
+    <section class="grid" id="productsGrid"></section>
+  </main>
+
+  <div class="modal" id="authModal" hidden>
+    <div class="modal-backdrop" id="authBackdrop"></div>
+
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Аккаунт</div>
+        <button class="iconbtn" id="authClose" type="button">✕</button>
+      </div>
+
+      <form id="authForm" class="form">
+        <label>Email
+          <input name="email" type="email" required />
+        </label>
+
+        <label>Password
+          <input name="password" type="password" required />
+        </label>
+
+        <div class="row" style="justify-content: flex-end;">
+          <button class="btn" id="loginBtn" type="button">Войти</button>
+          <button class="btn" id="registerBtn" type="button">Регистрация</button>
+        </div>
+
+        <div class="hint" id="authMsg"></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="cartModal" hidden>
+    <div class="modal-backdrop" id="cartBackdrop"></div>
+
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <div class="modal-title">Корзина</div>
+        <button class="iconbtn" id="cartClose" type="button">✕</button>
+      </div>
+
+      <div id="cartList" class="list"></div>
+
+      <div class="cart-foot">
+        <div class="cart-total">
+          Итого: <span id="cartTotal">0</span>
+        </div>
+        <div class="row end">
+          <button class="btn modalbtn" id="checkoutBtn" type="button">Оформить заказ</button>
+        </div>
+      </div>
+
+      <div class="hint" id="cartMsg"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="ordersModal" hidden>
+    <div class="modal-backdrop" id="ordersBackdrop"></div>
+
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <div class="modal-title">Мои заказы</div>
+        <button class="iconbtn" id="ordersClose" type="button">✕</button>
+      </div>
+
+      <div class="row end" style="gap:8px; margin: 8px 0 12px;">
+        <input id="orderSearchInput" type="number" min="1" placeholder="ID заказа" style="max-width:180px">
+        <button class="btn modalbtn" id="orderSearchBtn" type="button">Найти</button>
+        <button class="btn ghost" id="orderSearchResetBtn" type="button">Сброс</button>
+      </div>
+
+      <div id="ordersList" class="list"></div>
+      <div class="hint" id="ordersMsg"></div>
+    </div>
+  </div>
+
+</body>
+</html>
