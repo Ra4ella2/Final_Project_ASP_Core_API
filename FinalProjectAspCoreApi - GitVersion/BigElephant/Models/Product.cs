@@ -15,10 +15,8 @@ namespace BigElephant.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
 
-        // Остаток на складе
         public int Stock { get; set; }
 
-        // Доступен ли товар для покупки
         public bool IsActive { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
         public string? ImageUrl { get; set; }

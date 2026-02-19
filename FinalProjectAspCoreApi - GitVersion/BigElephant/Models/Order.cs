@@ -7,7 +7,6 @@ namespace BigElephant.Models
         [Key]
         public int Id { get; set; }
 
-        // Владелец заказа (AspNetUsers.Id)
         [Required]
         public string UserId { get; set; } = null!;
 
@@ -15,7 +14,6 @@ namespace BigElephant.Models
 
         public string Status { get; set; }
 
-        // Навигация
         public List<OrderItem> Items { get; set; } = new List<OrderItem>();
     }
 }

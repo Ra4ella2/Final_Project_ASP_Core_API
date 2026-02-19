@@ -14,14 +14,11 @@ namespace BigElephant.Models
         [Required]
         public int ProductId { get; set; }
 
-        // Количество товара
         public int Quantity { get; set; }
 
-        // Цена товара на момент покупки (фиксируется)
         [Column(TypeName = "decimal(18,2)")]
         public decimal UnitPrice { get; set; }
 
-        // Навигация
         public Order Order { get; set; } = null!;
         public Product Product { get; set; } = null!;
     }
