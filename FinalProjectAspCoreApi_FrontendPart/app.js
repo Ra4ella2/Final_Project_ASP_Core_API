@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const orderSearchBtn = document.getElementById("orderSearchBtn");
   const orderSearchResetBtn = document.getElementById("orderSearchResetBtn");
 
-  if (!grid) return console.error("Нет #productsGrid");
+  if (!grid) return console.error("Немає #productsGrid");
 
   let productsCache = [];
 
@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
       logout();
       setCart([]);
       updateHeader();
-      setStatus("Вы вышли");
+      setStatus("Ви вийшли");
       grid.innerHTML = "";
       loadProducts();
     } else {
@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!requireAuth()) return;
     const id = Number(orderSearchInput?.value);
     if (!id || id <= 0) {
-      ordersMsg.textContent = "Введи корректный ID заказа";
+      ordersMsg.textContent = "Введіть коректний ID замовлення";
       ordersMsg.className = "hint error";
       return;
     }
@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateHeader() {
     const token = getToken();
     if (!token) {
-      headerBtn.textContent = "Вход";
+      headerBtn.textContent = "Вхід";
       userInfo.textContent = "";
       return;
     }
@@ -155,8 +155,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const payload = decodeJwt(token);
     const email = payload?.email ?? "";
 
-    headerBtn.textContent = "Выход";
-    userInfo.textContent = email ? `👤 ${email}` : "👤 Пользователь";
+    headerBtn.textContent = "Вихід";
+    userInfo.textContent = email ? `👤 ${email}` : "👤 Користувач";
   }
 
   function openAuth() {
@@ -211,11 +211,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function showHttpError(whereEl, e) {
     const s = e.status;
-    let msg = e.message || "Ошибка";
+    let msg = e.message || "Помилка";
 
-    if (s === 401) msg = "Нужно войти";
-    if (s === 403) msg = "Нет прав";
-    if (s === 404) msg = "Не найдено";
+    if (s === 401) msg = "Треба увійти";
+    if (s === 403) msg = "Немає прав";
+    if (s === 404) msg = "Не знайдено";
 
     whereEl.textContent = msg;
     whereEl.className = "hint error";
@@ -375,7 +375,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setCart([]);
       renderCart();
 
-      cartMsg.textContent = `Заказ создан! ID: ${res?.orderId ?? ""}`.trim();
+      cartMsg.textContent = `Замовлення создано! ID: ${res?.orderId ?? ""}`.trim();
       cartMsg.className = "hint ok";
 
       loadProducts();
@@ -408,16 +408,16 @@ document.addEventListener("DOMContentLoaded", () => {
       ordersList.innerHTML = renderOrdersHtml([o]);
       bindOrdersHandlers();
 
-      ordersMsg.textContent = `Найден заказ #${id}`;
+      ordersMsg.textContent = `Знайдено замовленя #${id}`;
       ordersMsg.className = "hint ok";
     } catch (e) {
       showHttpError(ordersMsg, e);
-      ordersList.innerHTML = `<div class="muted">Заказ не найден</div>`;
+      ordersList.innerHTML = `<div class="muted">Замовленя не знайдено</div>`;
     }
   }
 
   async function loadOrders() {
-    ordersList.innerHTML = `<div class="muted">Загрузка...</div>`;
+    ordersList.innerHTML = `<div class="muted">Завантаження...</div>`;
     ordersMsg.textContent = "";
     ordersMsg.className = "hint";
 
@@ -425,7 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const orders = await apiFetch("/api/user/myOrders", { auth: true });
 
       if (!Array.isArray(orders) || orders.length === 0) {
-        ordersList.innerHTML = `<div class="muted">Заказов нет</div>`;
+        ordersList.innerHTML = `<div class="muted">Замовлення немає</div>`;
         return;
       }
 
@@ -433,7 +433,7 @@ document.addEventListener("DOMContentLoaded", () => {
       bindOrdersHandlers();
     } catch (e) {
       showHttpError(ordersMsg, e);
-      ordersList.innerHTML = `<div class="muted">Не удалось загрузить заказы</div>`;
+      ordersList.innerHTML = `<div class="muted">Не вдалось загрузити замовлення</div>`;
     }
   }
 
@@ -485,17 +485,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (box.dataset.loaded === "1") return;
 
-      box.textContent = "Загрузка деталей...";
+      box.textContent = "Завантаження деталей...";
 
       try {
         const d = await apiFetch(`/api/user/myOrders/${id}`, { auth: true });
         const lines = (d.items || []).map(i =>
           `• ${i.productName} × ${i.quantity} = ${(i.unitPrice * i.quantity).toFixed(2)}`
         );
-        box.textContent = lines.join("\n") || "Нет позиций";
+        box.textContent = lines.join("\n") || "Немає позицій";
         box.dataset.loaded = "1";
       } catch (e) {
-        box.textContent = e.message || "Ошибка";
+        box.textContent = e.message || "Помилка";
         box.dataset.loaded = "0";
       }
     }));
@@ -504,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const id = Number(b.dataset.cancel);
       try {
         await apiFetch(`/api/user/myOrder/${id}/status`, { method: "PATCH", auth: true });
-        ordersMsg.textContent = `Заказ #${id} отменён`;
+        ordersMsg.textContent = `Замовлення #${id} відхилино`;
         ordersMsg.className = "hint ok";
         loadOrders();
         loadProducts();
@@ -526,7 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderProducts(products) {
     if (!Array.isArray(products) || products.length === 0) {
-      grid.innerHTML = `<div class="muted">Товаров нет</div>`;
+      grid.innerHTML = `<div class="muted">Товарів немає</div>`;
       return;
     }
 
@@ -548,7 +548,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <div class="card-actions">
             <button class="btn modalbtn addBtn" data-add="${p.id}" ${p.stock <= 0 ? "disabled" : ""} type="button">
-              ${p.stock <= 0 ? "Нет в наличии" : "В корзину"}
+              ${p.stock <= 0 ? "Немає в наявності" : "В корзинку"}
             </button>
           </div>
         </article>
@@ -568,7 +568,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadProducts() {
-    setStatus("Загрузка товаров...");
+    setStatus("Завантаження товарів...");
     grid.innerHTML = "";
 
     try {
@@ -576,17 +576,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const normalized = (Array.isArray(products) ? products : []).map(normalizeProduct);
       productsCache = normalized;
 
-      setStatus(`Загружено: ${normalized.length}`);
+      setStatus(`Завантажено: ${normalized.length}`);
       renderProducts(normalized);
     } catch (e) {
       setStatus("");
       if (e.status === 401) {
         logout();
         updateHeader();
-        grid.innerHTML = `<div class="muted">Нужно войти, чтобы увидеть товары</div>`;
+        grid.innerHTML = `<div class="muted">Треба увійти, щоб побачити товари</div>`;
         return;
       }
-      grid.innerHTML = `<div class="muted">Ошибка: ${e.message}</div>`;
+      grid.innerHTML = `<div class="muted">Помилка: ${e.message}</div>`;
     }
   }
 
@@ -605,10 +605,10 @@ document.addEventListener("DOMContentLoaded", () => {
         auth: false
       });
 
-      if (!res?.accessToken) throw new Error("Нет accessToken в ответе");
+      if (!res?.accessToken) throw new Error("Немає accessToken в відповіді");
 
       if (isAdminToken(res.accessToken)) {
-        authMsg.textContent = "Админ не может входить в пользовательский интерфейс. Открой админ-панель.";
+        authMsg.textContent = "Адмін не може входити в користувацький інтерфейс. Відкрий адмін-панель.";
         authMsg.className = "hint error";
         return;
       }
@@ -618,7 +618,7 @@ document.addEventListener("DOMContentLoaded", () => {
       closeAuth();
       loadProducts();
     } catch (e) {
-      authMsg.textContent = e.message || "Ошибка входа";
+      authMsg.textContent = e.message || "Помилка входа";
       authMsg.className = "hint error";
     }
   }
@@ -638,10 +638,10 @@ document.addEventListener("DOMContentLoaded", () => {
         auth: false
       });
 
-      authMsg.textContent = "Регистрация успешна. Теперь нажми «Войти».";
+      authMsg.textContent = "Реєстрація успішна. Тепер натисни «Увійти».";
       authMsg.className = "hint ok";
     } catch (e) {
-      authMsg.textContent = e.message || "Ошибка регистрации";
+      authMsg.textContent = e.message || "Помилка реєстрації";
       authMsg.className = "hint error";
     }
   }

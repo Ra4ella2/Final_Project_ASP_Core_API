@@ -12,7 +12,7 @@
   <section id="loginScreen" class="screen">
     <div class="authCard">
       <div class="authTitle">BigElephant • Admin</div>
-      <div class="muted small">Вход только для роли <b>Admin</b></div>
+      <div class="muted small">Вхід тільки для ролі <b>Admin</b></div>
 
       <form id="adminLoginForm" class="authForm">
         <label>Email
@@ -29,7 +29,7 @@
       <div id="loginMsg" class="hint"></div>
 
       <div class="hint small">
-        Если ты не админ — открой пользовательский сайт.
+        Якщо ти не адмін — відкрий користувацький сайт.
       </div>
     </div>
   </section>
@@ -41,16 +41,16 @@
 
       <div class="actions">
         <div id="adminInfo" class="adminInfo"></div>
-        <button class="btn" id="logoutBtn" type="button">Выход</button>
+        <button class="btn" id="logoutBtn" type="button">Вихід</button>
       </div>
     </header>
 
     <main class="container">
 
       <div class="tabs">
-        <button class="tab active" data-tab="products" type="button">Товары</button>
-        <button class="tab" data-tab="orders" type="button">Заказы</button>
-        <button class="tab" data-tab="users" type="button">Пользователи</button>
+        <button class="tab active" data-tab="products" type="button">Товари</button>
+        <button class="tab" data-tab="orders" type="button">Замовлення</button>
+        <button class="tab" data-tab="users" type="button">Користувачі</button>
       </div>
 
       <section id="productsSection" class="panel">
@@ -59,43 +59,43 @@
 
           <div class="row" style="gap:8px;">
             <input id="productSearchId" type="number" placeholder="ID товара..." style="max-width:160px;" />
-            <button class="btn" id="productSearchBtn" type="button">Найти</button>
-            <button class="btn" id="productClearBtn" type="button">Сброс</button>
+            <button class="btn" id="productSearchBtn" type="button">Знайти</button>
+            <button class="btn" id="productClearBtn" type="button">Зброс</button>
 
-            <button class="btn" id="reloadProductsBtn" type="button">Обновить</button>
+            <button class="btn" id="reloadProductsBtn" type="button">Оновити</button>
           </div>
         </div>
 
         <div id="productsStatus" class="muted small"></div>
 
         <div class="card">
-          <div class="cardTitle">Добавить товар</div>
+          <div class="cardTitle">Додати товар</div>
 
           <div class="formGrid">
-            <label>Название
+            <label>Назва
               <input id="newName" type="text" placeholder="iPhone 15" />
             </label>
 
-            <label>Цена
+            <label>Ціна
               <input id="newPrice" type="number" step="0.01" placeholder="999.99" />
             </label>
 
-            <label>Остаток
+            <label>Залишок
               <input id="newStock" type="number" step="1" placeholder="10" />
             </label>
 
-            <label class="span2">ImageUrl (ссылка на фото)
+            <label class="span2">ImageUrl (посилання на фото)
               <input id="newImageUrl" type="url" placeholder="https://..." />
             </label>
 
             <label class="checkLine">
               <input id="newActive" type="checkbox" checked />
-              Активен
+              Активний
             </label>
           </div>
 
           <div class="row end">
-            <button class="btn primary" id="createProductBtn" type="button">Создать</button>
+            <button class="btn primary" id="createProductBtn" type="button">Створити</button>
           </div>
 
           <div class="hint" id="createMsg"></div>
@@ -106,13 +106,13 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Название</th>
-                <th>Цена</th>
-                <th>Stock</th>
-                <th>Active</th>
-                <th>Deleted</th>
+                <th>Назва</th>
+                <th>Ціна</th>
+                <th>Залишок</th>
+                <th>Активний</th>
+                <th>Видаленний</th>
                 <th>ImageUrl</th>
-                <th>Действия</th>
+                <th>Дія</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -122,14 +122,14 @@
 
       <section id="ordersSection" class="panel" hidden>
         <div class="row">
-          <h1 class="title">Заказы</h1>
+          <h1 class="title">Замовлення</h1>
 
           <div class="row" style="gap:8px;">
             <input id="orderSearchId" type="number" placeholder="ID заказа..." style="max-width:160px;" />
-            <button class="btn" id="orderSearchBtn" type="button">Найти</button>
-            <button class="btn" id="orderClearBtn" type="button">Сброс</button>
+            <button class="btn" id="orderSearchBtn" type="button">Знайти</button>
+            <button class="btn" id="orderClearBtn" type="button">Зброс</button>
 
-            <button class="btn" id="reloadOrdersBtn" type="button">Обновить</button>
+            <button class="btn" id="reloadOrdersBtn" type="button">Оновити</button>
           </div>
         </div>
 
@@ -144,7 +144,7 @@
                 <th>CreatedAt</th>
                 <th>Status</th>
                 <th>Items</th>
-                <th>Действия</th>
+                <th>Дія</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -154,8 +154,8 @@
 
       <section id="usersSection" class="panel" hidden>
         <div class="row">
-          <h1 class="title">Пользователи</h1>
-          <button class="btn" id="reloadUsersBtn" type="button">Обновить</button>
+          <h1 class="title">Користувачі</h1>
+          <button class="btn" id="reloadUsersBtn" type="button">Оновити</button>
         </div>
 
         <div id="usersStatus" class="muted small"></div>

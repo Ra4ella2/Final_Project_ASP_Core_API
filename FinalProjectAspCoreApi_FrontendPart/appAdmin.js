@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = String(fd.get("email") || "").trim();
     const password = String(fd.get("password") || "");
 
-    if (!email || !password) return setLoginMsg("Заполни email и пароль");
+    if (!email || !password) return setLoginMsg("Заповни email та пароль");
 
     try {
       const res = await apiFetch("/api/auth/login", {
@@ -121,10 +121,10 @@ document.addEventListener("DOMContentLoaded", () => {
         body: { email, password }
       });
 
-      if (!res?.accessToken) throw new Error("Нет accessToken");
+      if (!res?.accessToken) throw new Error("Немає accessToken");
 
       if (!isAdminToken(res.accessToken)) {
-        setLoginMsg("Доступ запрещён: не Admin");
+        setLoginMsg("Доступ заборонено: не Admin");
         return;
       }
 
@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
       switchTab("products");
       loadProducts();
     } catch (e) {
-      setLoginMsg(e.message || "Ошибка входа");
+      setLoginMsg(e.message || "Помилка входа");
     }
   }
 
@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ordersSection.hidden = name !== "orders";
     usersSection.hidden = name !== "users";
 
-    if (!accessToken) return showLogin("Нужно войти");
+    if (!accessToken) return showLogin("Треба увійти");
 
     if (name === "products") loadProducts();
     if (name === "orders") loadOrders();
@@ -169,43 +169,43 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadProducts() {
-    if (!accessToken) return showLogin("Нужно войти");
+    if (!accessToken) return showLogin("Треба увійти");
 
-    productsStatus.textContent = "Загрузка...";
+    productsStatus.textContent = "Завантаження...";
     productsTbody.innerHTML = "";
 
     try {
       const list = await apiFetch(R.productsList, { auth: true });
       const products = Array.isArray(list) ? list : [];
 
-      productsStatus.textContent = `Загружено: ${products.length}`;
+      productsStatus.textContent = `Завантажено: ${products.length}`;
       renderProducts(products);
     } catch (e) {
-      productsStatus.textContent = `Ошибка: ${e.message || e}`;
+      productsStatus.textContent = `Помилка: ${e.message || e}`;
       if (e.status === 401) forceRelogin();
     }
   }
 
   async function searchProductById() {
-    if (!accessToken) return showLogin("Нужно войти");
+    if (!accessToken) return showLogin("Треба увійти");
 
     const id = Number(productSearchId?.value || 0);
     if (!id) return loadProducts();
 
-    productsStatus.textContent = `Поиск товара #${id}...`;
+    productsStatus.textContent = `Пошук товара #${id}...`;
     productsTbody.innerHTML = "";
 
     try {
       const product = await apiFetch(R.productGetById(id), { auth: true });
-      productsStatus.textContent = `Найден товар #${id}`;
+      productsStatus.textContent = `Знайдено товар #${id}`;
       renderProducts([product]);
     } catch (e) {
       if (e.status === 404) {
-        productsStatus.textContent = `Товар #${id} не найден`;
+        productsStatus.textContent = `Товар #${id} не знайдено`;
         productsTbody.innerHTML = "";
         return;
       }
-      productsStatus.textContent = `Ошибка: ${e.message || e}`;
+      productsStatus.textContent = `Помилка: ${e.message || e}`;
       if (e.status === 401) forceRelogin();
     }
   }
@@ -230,7 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${isDeleted ? "🗑️" : "—"}</td>
           <td><input data-field="imageUrl" value="${imageUrl}" placeholder="https://..." /></td>
           <td class="small">
-            <button class="btn" data-save type="button">Сохранить</button>
+            <button class="btn" data-save type="button">Зберегти</button>
             <button class="btn" data-del type="button" ${isDeleted ? "disabled" : ""}>Удалить</button>
             <button class="btn" data-ret type="button" ${isDeleted ? "" : "disabled"}>Вернуть</button>
             <div class="hint" data-rowmsg></div>
@@ -260,14 +260,14 @@ document.addEventListener("DOMContentLoaded", () => {
           await apiFetch(R.productPatchActive(id), { method: "PATCH", auth: true, body: { isActive: active } });
           await apiFetch(R.productPatchImage(id), { method: "PATCH", auth: true, body: { imageUrl: imageUrl || null } });
 
-          msg.textContent = "Сохранено ✅";
+          msg.textContent = "Збережено ✅";
           msg.className = "hint ok";
 
           const currentSearch = Number(productSearchId?.value || 0);
           if (currentSearch) searchProductById();
           else loadProducts();
         } catch (e) {
-          msg.textContent = e.message || "Ошибка";
+          msg.textContent = e.message || "Помилка";
           msg.className = "hint error";
           if (e.status === 401) forceRelogin();
         }
@@ -284,14 +284,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
           await apiFetch(R.productDelete(id), { method: "DELETE", auth: true });
-          msg.textContent = "Удалено (soft) ✅";
+          msg.textContent = "Видалено (soft) ✅";
           msg.className = "hint ok";
 
           const currentSearch = Number(productSearchId?.value || 0);
           if (currentSearch) searchProductById();
           else loadProducts();
         } catch (e) {
-          msg.textContent = e.message || "Ошибка";
+          msg.textContent = e.message || "Помилка";
           msg.className = "hint error";
           if (e.status === 401) forceRelogin();
         }
@@ -308,14 +308,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
           await apiFetch(R.productReturn(id), { method: "PATCH", auth: true });
-          msg.textContent = "Восстановлено ✅";
+          msg.textContent = "Відновлено ✅";
           msg.className = "hint ok";
 
           const currentSearch = Number(productSearchId?.value || 0);
           if (currentSearch) searchProductById();
           else loadProducts();
         } catch (e) {
-          msg.textContent = e.message || "Ошибка";
+          msg.textContent = e.message || "Помилка";
           msg.className = "hint error";
           if (e.status === 401) forceRelogin();
         }
@@ -324,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function createProduct() {
-    if (!accessToken) return showLogin("Нужно войти");
+    if (!accessToken) return showLogin("Треба увійти");
 
     setCreateMsg("");
 
@@ -334,9 +334,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const imageUrl = String(newImageUrl.value || "").trim();
     const isActive = !!newActive.checked;
 
-    if (!name) return setCreateMsg("Название обязательно");
-    if (Number.isNaN(price) || price <= 0) return setCreateMsg("Цена некорректна");
-    if (Number.isNaN(stock) || stock < 0) return setCreateMsg("Stock некорректен");
+    if (!name) return setCreateMsg("Назва обов'язкова");
+    if (Number.isNaN(price) || price <= 0) return setCreateMsg("Ціна некорректна");
+    if (Number.isNaN(stock) || stock < 0) return setCreateMsg("Залишок некорректний");
 
     try {
       await apiFetch(R.productCreate, {
@@ -345,7 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body: { name, price, stock, imageUrl: imageUrl || null, isActive }
       });
 
-      setCreateMsg("Создано ✅", true);
+      setCreateMsg("Створено ✅", true);
 
       newName.value = "";
       newPrice.value = "";
@@ -356,7 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (productSearchId) productSearchId.value = "";
       loadProducts();
     } catch (e) {
-      setCreateMsg(e.message || "Ошибка создания");
+      setCreateMsg(e.message || "Помилка створення");
       if (e.status === 401) forceRelogin();
     }
   }
@@ -367,43 +367,43 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadOrders() {
-    if (!accessToken) return showLogin("Нужно войти");
+    if (!accessToken) return showLogin("Треба увійти");
 
-    ordersStatus.textContent = "Загрузка...";
+    ordersStatus.textContent = "Завантаження...";
     ordersTbody.innerHTML = "";
 
     try {
       const list = await apiFetch(R.ordersList, { auth: true });
       const orders = Array.isArray(list) ? list : [];
 
-      ordersStatus.textContent = `Загружено: ${orders.length}`;
+      ordersStatus.textContent = `Завантажено: ${orders.length}`;
       renderOrders(orders);
     } catch (e) {
-      ordersStatus.textContent = `Ошибка: ${e.message || e}`;
+      ordersStatus.textContent = `Помилка: ${e.message || e}`;
       if (e.status === 401) forceRelogin();
     }
   }
 
   async function searchOrderById() {
-    if (!accessToken) return showLogin("Нужно войти");
+    if (!accessToken) return showLogin("Треба увійти");
 
     const id = Number(orderSearchId?.value || 0);
     if (!id) return loadOrders();
 
-    ordersStatus.textContent = `Поиск заказа #${id}...`;
+    ordersStatus.textContent = `Пошук заказа #${id}...`;
     ordersTbody.innerHTML = "";
 
     try {
       const order = await apiFetch(R.orderGetById(id), { auth: true });
-      ordersStatus.textContent = `Найден заказ #${id}`;
+      ordersStatus.textContent = `Знайдено заказ #${id}`;
       renderOrders([order]);
     } catch (e) {
       if (e.status === 404) {
-        ordersStatus.textContent = `Заказ #${id} не найден`;
+        ordersStatus.textContent = `Заказ #${id} не знайдено`;
         ordersTbody.innerHTML = "";
         return;
       }
-      ordersStatus.textContent = `Ошибка: ${e.message || e}`;
+      ordersStatus.textContent = `Помилка: ${e.message || e}`;
       if (e.status === 401) forceRelogin();
     }
   }
@@ -432,7 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <td><select data-status>${options}</select></td>
           <td class="small">${itemsText}</td>
           <td class="small">
-            <button class="btn" data-save-order type="button">Сохранить</button>
+            <button class="btn" data-save-order type="button">Зберегти</button>
             <div class="hint" data-rowmsg></div>
           </td>
         </tr>
@@ -456,14 +456,14 @@ document.addEventListener("DOMContentLoaded", () => {
             body: { status }
           });
 
-          msg.textContent = "Обновлено ✅";
+          msg.textContent = "Оновлено ✅";
           msg.className = "hint ok";
 
           const currentSearch = Number(orderSearchId?.value || 0);
           if (currentSearch) searchOrderById();
           else loadOrders();
         } catch (e) {
-          msg.textContent = e.message || "Ошибка";
+          msg.textContent = e.message || "Помилка";
           msg.className = "hint error";
           if (e.status === 401) forceRelogin();
         }
@@ -472,16 +472,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadUsers() {
-    if (!accessToken) return showLogin("Нужно войти");
+    if (!accessToken) return showLogin("Треба увійти");
 
-    usersStatus.textContent = "Загрузка...";
+    usersStatus.textContent = "Завантаження...";
     usersTbody.innerHTML = "";
 
     try {
       const list = await apiFetch(R.usersList, { auth: true });
       const users = Array.isArray(list) ? list : [];
 
-      usersStatus.textContent = `Загружено: ${users.length}`;
+      usersStatus.textContent = `Завантажено: ${users.length}`;
 
       usersTbody.innerHTML = users.map(u => {
         const id = u.id ?? u.Id;
@@ -494,7 +494,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
       }).join("");
     } catch (e) {
-      usersStatus.textContent = `Ошибка: ${e.message || e}`;
+      usersStatus.textContent = `Помилка: ${e.message || e}`;
       if (e.status === 401) forceRelogin();
     }
   }
@@ -504,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (auth) {
       if (!accessToken) {
-        const err = new Error("Нужно войти");
+        const err = new Error("Треба увійти");
         err.status = 401;
         throw err;
       }
@@ -532,7 +532,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function forceRelogin() {
     accessToken = null;
-    showLogin("Сессия истекла — войди заново");
+    showLogin("Сесія закінчилася — увійди знову");
   }
 
   function decodeJwt(token) {

@@ -12,7 +12,6 @@ namespace BigElephant.Data
             UserManager<AppUser> userManager,
             RoleManager<IdentityRole> roleManager)
         {
-            // ===== Roles =====
             if (!await roleManager.RoleExistsAsync(SuperAdmin))
                 await roleManager.CreateAsync(new IdentityRole(SuperAdmin));
 
@@ -22,7 +21,6 @@ namespace BigElephant.Data
             if (!await roleManager.RoleExistsAsync(Customer))
                 await roleManager.CreateAsync(new IdentityRole(Customer));
 
-            // ===== SuperAdmin (root) =====
             var superEmail = "super@store.local";
 
             var superUser = await userManager.FindByEmailAsync(superEmail);
@@ -33,10 +31,10 @@ namespace BigElephant.Data
                     UserName = superEmail,
                     Email = superEmail,
                     EmailConfirmed = true
-                };
-
-                var result = await userManager.CreateAsync(superUser, "SuperAdmin123!");
-                if (result.Succeeded)
+                };  
+                                                                
+                var result = await userManager.CreateAsync(superUser, "SuperAdmin123!");                            
+                if (result.Succeeded)   
                     await userManager.AddToRoleAsync(superUser, SuperAdmin);
             }
             else
@@ -45,7 +43,6 @@ namespace BigElephant.Data
                     await userManager.AddToRoleAsync(superUser, SuperAdmin);
             }
 
-            // ===== Default Admin =====
             var adminEmail = "admin@store.local";
 
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
