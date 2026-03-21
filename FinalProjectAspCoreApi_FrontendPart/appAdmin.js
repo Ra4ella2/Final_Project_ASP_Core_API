@@ -231,8 +231,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <td><input data-field="imageUrl" value="${imageUrl}" placeholder="https://..." /></td>
           <td class="small">
             <button class="btn" data-save type="button">Зберегти</button>
-            <button class="btn" data-del type="button" ${isDeleted ? "disabled" : ""}>Удалить</button>
-            <button class="btn" data-ret type="button" ${isDeleted ? "" : "disabled"}>Вернуть</button>
+            <button class="btn" data-del type="button" ${isDeleted ? "disabled" : ""}>Видалити</button>
+            <button class="btn" data-ret type="button" ${isDeleted ? "" : "disabled"}>Повернути</button>
             <div class="hint" data-rowmsg></div>
           </td>
         </tr>

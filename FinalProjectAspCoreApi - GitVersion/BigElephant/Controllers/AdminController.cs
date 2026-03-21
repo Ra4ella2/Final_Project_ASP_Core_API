@@ -100,7 +100,6 @@ public class AdminController : ControllerBase
     [HttpPost("create-admin")]
     public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest request, [FromServices] UserManager<AppUser> userManager, [FromServices] RoleManager<IdentityRole> roleManager)
     {
-        // роль Admin должна существовать
         if (!await roleManager.RoleExistsAsync("Admin"))
             await roleManager.CreateAsync(new IdentityRole("Admin"));
 

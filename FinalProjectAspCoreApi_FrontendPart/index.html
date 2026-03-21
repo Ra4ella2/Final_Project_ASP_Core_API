@@ -9,12 +9,12 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">BigElephant</div>
+    <div class="brand">eMarket</div>
      <div class="h-actions">
       <button class="btn" id="ordersBtn" type="button">Мої замовлення</button>
 
       <button class="btn" id="cartBtn" type="button">
-        Корзинка (<span id="cartCount">0</span>)
+        Кошик (<span id="cartCount">0</span>)
       </button>
 
       <div id="userInfo" class="userInfo"></div>
@@ -28,7 +28,24 @@
     </div>
 
     <div id="status" class="muted small"></div>
-
+    <div class="price-filter" style="margin-top:12px; gap:8px;">
+      <div>
+        <input id="minPriceInput" type="number" min="0" step="0.01" placeholder="Ціна від" style="max-width:160px;">
+        <input id="maxPriceInput" type="number" min="0" step="0.01" placeholder="Ціна до" style="max-width:160px;">
+      </div>
+      <div>
+        <button class="btn modalbtn" id="priceFilterBtn" type="button">Фільтр</button>
+        <button class="btn ghost" id="priceFilterResetBtn" type="button">Скинути</button>
+      </div>
+    </div>
+    <div class="price-filter" style="margin-top:12px; gap:8px;">
+      <div>
+        <input id="searchInput" type="text" placeholder="Пошук товару по імені" style="max-width:260px;">
+      </div>
+      <div>
+        <button class="btn ghost" id="searchResetBtn" type="button">Скинути пошук</button>
+      </div>
+    </div>
     <section class="grid" id="productsGrid"></section>
   </main>
 
@@ -65,7 +82,7 @@
 
     <div class="modal-card wide">
       <div class="modal-head">
-        <div class="modal-title">Корзинка</div>
+        <div class="modal-title">Кошик</div>
         <button class="iconbtn" id="cartClose" type="button">✕</button>
       </div>
 
@@ -96,11 +113,21 @@
       <div class="row end" style="gap:8px; margin: 8px 0 12px;">
         <input id="orderSearchInput" type="number" min="1" placeholder="ID заказа" style="max-width:180px">
         <button class="btn modalbtn" id="orderSearchBtn" type="button">Знайти</button>
-        <button class="btn ghost" id="orderSearchResetBtn" type="button">Зброс</button>
+        <button class="btn ghost" id="orderSearchResetBtn" type="button">Скинути</button>
       </div>
 
       <div id="ordersList" class="list"></div>
       <div class="hint" id="ordersMsg"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footerInfo">
+      <div class="contactInfo">
+        <p>Виконав: Лисенко Руслан Юрійович</p>
+        <p>Куратор курсової: Лавренюк Ірина Валеріївна</p>
+        <p>Пошта: lysenko_r@dlit.dp.ua</p>
+      </div>
     </div>
   </div>
 

@@ -11,7 +11,7 @@
 
   <section id="loginScreen" class="screen">
     <div class="authCard">
-      <div class="authTitle">BigElephant • Admin</div>
+      <div class="authTitle">eMarket • Admin</div>
       <div class="muted small">Вхід тільки для ролі <b>Admin</b></div>
 
       <form id="adminLoginForm" class="authForm">
@@ -23,7 +23,7 @@
           <input name="password" type="password" placeholder="••••••••" required />
         </label>
 
-        <button class="btn primary" id="adminLoginBtn" type="submit">Войти</button>
+        <button class="btn primary" id="adminLoginBtn" type="submit">Увійти</button>
       </form>
 
       <div id="loginMsg" class="hint"></div>
@@ -37,7 +37,7 @@
   <section id="adminPanel" class="screen" hidden>
 
     <header class="topbar">
-      <div class="brand">BigElephant • Admin</div>
+      <div class="brand">eMarket • Admin</div>
 
       <div class="actions">
         <div id="adminInfo" class="adminInfo"></div>
@@ -55,12 +55,12 @@
 
       <section id="productsSection" class="panel">
         <div class="row">
-          <h1 class="title">Товары</h1>
+          <h1 class="title">Товари</h1>
 
           <div class="row" style="gap:8px;">
-            <input id="productSearchId" type="number" placeholder="ID товара..." style="max-width:160px;" />
+            <input id="productSearchId" type="number" placeholder="ID товару..." style="max-width:160px;" />
             <button class="btn" id="productSearchBtn" type="button">Знайти</button>
-            <button class="btn" id="productClearBtn" type="button">Зброс</button>
+            <button class="btn" id="productClearBtn" type="button">Скинути</button>
 
             <button class="btn" id="reloadProductsBtn" type="button">Оновити</button>
           </div>
@@ -125,9 +125,9 @@
           <h1 class="title">Замовлення</h1>
 
           <div class="row" style="gap:8px;">
-            <input id="orderSearchId" type="number" placeholder="ID заказа..." style="max-width:160px;" />
+            <input id="orderSearchId" type="number" placeholder="ID замовлення..." style="max-width:160px;" />
             <button class="btn" id="orderSearchBtn" type="button">Знайти</button>
-            <button class="btn" id="orderClearBtn" type="button">Зброс</button>
+            <button class="btn" id="orderClearBtn" type="button">Скинути</button>
 
             <button class="btn" id="reloadOrdersBtn" type="button">Оновити</button>
           </div>
@@ -140,10 +140,10 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>UserId</th>
-                <th>CreatedAt</th>
-                <th>Status</th>
-                <th>Items</th>
+                <th>ID користувача</th>
+                <th>Дата та час створення</th>
+                <th>Статус</th>
+                <th>Продукт</th>
                 <th>Дія</th>
               </tr>
             </thead>
@@ -176,5 +176,14 @@
     </main>
   </section>
 
+  <div class="footer">
+    <div class="footerInfo">
+      <div class="contactInfo">
+        <p>Виконав: Лисенко Руслан Юрійович</p>
+        <p>Куратор курсової: Лавренюк Ірина Валеріївна</p>
+        <p>Пошта: lysenko_r@dlit.dp.ua</p>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

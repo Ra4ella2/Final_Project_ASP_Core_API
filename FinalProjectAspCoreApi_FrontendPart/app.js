@@ -14,6 +14,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const cartCountEl = document.getElementById("cartCount");
 
   const ordersBtn = document.getElementById("ordersBtn");
+  const minPriceInput = document.getElementById("minPriceInput");
+  const maxPriceInput = document.getElementById("maxPriceInput");
+  const priceFilterBtn = document.getElementById("priceFilterBtn");
+  const priceFilterResetBtn = document.getElementById("priceFilterResetBtn");
 
   const authModal = document.getElementById("authModal");
   const authBackdrop = document.getElementById("authBackdrop");
@@ -36,6 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const ordersClose = document.getElementById("ordersClose");
   const ordersList = document.getElementById("ordersList");
   const ordersMsg = document.getElementById("ordersMsg");
+
+  const searchInput = document.getElementById("searchInput");
+  const searchResetBtn = document.getElementById("searchResetBtn");
 
   const orderSearchInput = document.getElementById("orderSearchInput");
   const orderSearchBtn = document.getElementById("orderSearchBtn");
@@ -99,6 +106,33 @@ document.addEventListener("DOMContentLoaded", () => {
     orderSearchInput.value = "";
     loadOrders();
   });
+
+  priceFilterBtn?.addEventListener("click", applyPriceFilter);
+  priceFilterResetBtn?.addEventListener("click", () => {
+    minPriceInput.value = "";
+    maxPriceInput.value = "";
+    renderProducts(productsCache);
+  });
+
+  minPriceInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") applyPriceFilter();
+  });
+
+  maxPriceInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") applyPriceFilter();
+  });
+
+  searchResetBtn?.addEventListener("click", () => {
+    searchInput.value = "";
+    renderProducts(productsCache);
+    setStatus(`Завантажено: ${productsCache.length}`);
+  });
+
+  searchInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") applyNameFilter();
+  });
+
+  searchInput?.addEventListener("input", applyNameFilter);
 
   updateHeader();
   if (!getToken()) setCart([]);
@@ -305,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cartTotal.textContent = total.toFixed(2);
 
     if (!cart.length) {
-      cartList.innerHTML = `<div class="muted">Корзина пуста</div>`;
+      cartList.innerHTML = `<div class="muted">Кошик пустий</div>`;
       checkoutBtn.disabled = true;
       return;
     }
@@ -375,7 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setCart([]);
       renderCart();
 
-      cartMsg.textContent = `Замовлення создано! ID: ${res?.orderId ?? ""}`.trim();
+      cartMsg.textContent = `Замовлення створено! ID: ${res?.orderId ?? ""}`.trim();
       cartMsg.className = "hint ok";
 
       loadProducts();
@@ -445,7 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return `
         <div class="item order-item">
           <div>
-            <div class="item-title">Заказ #${o.id}</div>
+            <div class="item-title">Замовлення #${o.id}</div>
             <div class="item-sub">
               ${new Date(o.createdAt).toLocaleString()} • 
               ${o.status} • 
@@ -453,8 +487,8 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div class="row end" style="margin-top:8px; gap:8px;">
-              <button class="btn ghost" data-details="${o.id}" type="button">Детали</button>
-              <button class="btn modalbtn" data-cancel="${o.id}" type="button" ${canCancel ? "" : "disabled"}>Отменить</button>
+              <button class="btn ghost" data-details="${o.id}" type="button">Деталі</button>
+              <button class="btn modalbtn" data-cancel="${o.id}" type="button" ${canCancel ? "" : "disabled"}>Відмінити</button>
             </div>
 
             <div class="muted small"
@@ -543,12 +577,12 @@ document.addEventListener("DOMContentLoaded", () => {
                onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" />
 
           <div class="card-title">${p.name}</div>
-          <div class="muted">Stock: ${p.stock}</div>
-          <div class="price">${p.price.toFixed(2)}</div>
+          <div class="muted">Залишок: ${p.stock}</div>
+          <div class="price">${p.price.toFixed(2)} ₴</div>
 
           <div class="card-actions">
             <button class="btn modalbtn addBtn" data-add="${p.id}" ${p.stock <= 0 ? "disabled" : ""} type="button">
-              ${p.stock <= 0 ? "Немає в наявності" : "В корзинку"}
+              ${p.stock <= 0 ? "Немає в наявності" : "В кошик"}
             </button>
           </div>
         </article>
@@ -590,6 +624,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function applyPriceFilter() {
+    const min = Number(minPriceInput?.value);
+    const max = Number(maxPriceInput?.value);
+
+    let filtered = [...productsCache];
+
+    if (!isNaN(min) && minPriceInput.value !== "") {
+      filtered = filtered.filter(p => Number(p.price) >= min);
+    }
+
+    if (!isNaN(max) && maxPriceInput.value !== "") {
+      filtered = filtered.filter(p => Number(p.price) <= max);
+    }
+
+    renderProducts(filtered);
+    setStatus(`Знайдено товарів: ${filtered.length}`);
+  }
+
   async function onLogin() {
     authMsg.textContent = "";
     authMsg.className = "hint";
@@ -621,6 +673,23 @@ document.addEventListener("DOMContentLoaded", () => {
       authMsg.textContent = e.message || "Помилка входа";
       authMsg.className = "hint error";
     }
+  }
+
+  function applyNameFilter() {
+    const query = searchInput?.value.trim().toLowerCase() || "";
+
+    if (!query) {
+      renderProducts(productsCache);
+      setStatus(`Завантажено: ${productsCache.length}`);
+      return;
+    }
+
+    const filtered = productsCache.filter(p =>
+      p.name.toLowerCase().includes(query)
+    );
+
+    renderProducts(filtered);
+    setStatus(`Знайдено товарів: ${filtered.length}`);
   }
 
   async function onRegister() {
